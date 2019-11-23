@@ -38,6 +38,6 @@ Type "help", "copyright", "credits" or "license" for more information.
 See https://github.com/UFAL-DSG/alex/blob/master/alex/components/hub/vio.py
 
 ### Credits to:
-https://github.com/UFAL-DSG/pjsip - For implementing buffered streaming
-https://github.com/mgwilliams/python3-pjsip - For porting to Python 3
+- https://github.com/UFAL-DSG/pjsip - For implementing buffered streaming
+- https://github.com/mgwilliams/python3-pjsip - For porting to Python 3
 
