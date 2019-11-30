@@ -6,7 +6,7 @@ This version works with pjproject-2.9.
 
 
 ## Install and compile PJSUA(XT) for Python 3
-```
+```sh
 sudo apt install python3 python3-dev build-essential libasound2-dev
 wget https://www.pjsip.org/release/2.9/pjproject-2.9.zip
 unzip pjproject-2.9.zip
