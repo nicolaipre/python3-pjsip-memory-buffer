@@ -26,7 +26,7 @@ python3 setup-pjsuaxt.py install
 ```
 
 ## Test installation
-```
+```python
 Python 3.6.4 (default, Jul  1 2019, 21:52:48)
 [GCC 8.3.0] on linux
 Type "help", "copyright", "credits" or "license" for more information.
