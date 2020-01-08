@@ -1,4 +1,4 @@
-# Python3 support for pjsip with audio buffers for streaming
+# Python3 support for pjsip with memory buffers for streaming
 
 I have simply combined the following two libraries because I needed both in one.
 
