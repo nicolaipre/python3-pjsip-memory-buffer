@@ -1,11 +1,11 @@
-# Python 3 support for pjproject/pjsip with audio buffers
+# Python3 support for pjsip with audio buffers for streaming
 
 I have simply combined the following two libraries because I needed both in one.
 
 This version works with pjproject-2.9.
 
 
-## Install and compile PJSUA(XT) for Python 3
+## Install and compile PJSUA(XT) for Python3
 ```sh
 sudo apt install python3 python3-dev build-essential libasound2-dev
 wget https://www.pjsip.org/release/2.9/pjproject-2.9.zip
@@ -39,5 +39,5 @@ See https://github.com/UFAL-DSG/alex/blob/master/alex/components/hub/vio.py
 
 ### Credits to:
 - https://github.com/UFAL-DSG/pjsip - For implementing buffered streaming
-- https://github.com/mgwilliams/python3-pjsip - For porting to Python 3
+- https://github.com/mgwilliams/python3-pjsip - For porting to Python3
 
