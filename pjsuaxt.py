@@ -3056,7 +3056,7 @@ class MemCapture:
         self._lib()._err_check("create()", self, err)
 
     def get_read_available(self):
-        """Return how many samples can be put into mem player.
+        """Return how many samples can be read from mem capture.
         """
 
         lck = self._lib().auto_lock()
