@@ -22,7 +22,7 @@ git clone https://github.com/nicolaipre/python3-pjsip-memory-buffer.git
 cd python3-pjsip-memory-buffer
 
 python3 setup-pjsuaxt.py build
-python3 setup-pjsuaxt.py install
+sudo python3 setup-pjsuaxt.py install
 ```
 
 ## Test installation
