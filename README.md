@@ -19,7 +19,7 @@ sudo make install
 
 cd pjsip-apps/src/
 git clone https://github.com/nicolaipre/python3-pjsip-memory-buffer.git
-cd python3-pjsip-buffer
+cd python3-pjsip-memory-buffer
 
 python3 setup-pjsuaxt.py build
 python3 setup-pjsuaxt.py install
