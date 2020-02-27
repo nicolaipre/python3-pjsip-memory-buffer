@@ -34,8 +34,8 @@ struct module_state {
 
 /* FJ Extension */
 
-const int packet_size_multiple_of_frame_size = 4;
-const int frame_buffer_multiple_of_packet_size = 16;
+const unsigned int packet_size_multiple_of_frame_size = 4;
+const unsigned int frame_buffer_multiple_of_packet_size = 16;
 
 typedef struct {
   pj_lock_t * lock;
@@ -98,16 +98,16 @@ pj_status_t mem_player_cb(pjmedia_port *port, void *usr_data) {
   else if(p_mem_player_var->frames_in_buffer < packet_size_multiple_of_frame_size) {
     // there are too little of data to be played
     printf("mem_player_cb - playing less than packet_size_multiple_of_frame_size \n");
-    printf("%d %d\n", p_mem_player_var->frame_buffer_read, p_mem_player_var->frame_buffer_write);
+    printf("%p %p\n", p_mem_player_var->frame_buffer_read, p_mem_player_var->frame_buffer_write);
 
     // set the mem player to zero
     memset(p_mem_player_var->mem_player_buffer, 0, p_mem_player_var->mem_player_buffer_size);
 
     // I should play what I can otherwise it can happen that the end of utterances will not be played
     memcpy(p_mem_player_var->mem_player_buffer, p_mem_player_var->frame_buffer_read,
-      p_mem_player_var->frames_in_buffer*p_mem_player_var->samples_per_frame*2);
+      p_mem_player_var->frames_in_buffer * p_mem_player_var->samples_per_frame * (p_mem_player_var->bits_per_sample / 2));
 
-    p_mem_player_var->frame_buffer_read += p_mem_player_var->frames_in_buffer*p_mem_player_var->samples_per_frame*2;
+    p_mem_player_var->frame_buffer_read += p_mem_player_var->frames_in_buffer * p_mem_player_var->samples_per_frame * (p_mem_player_var->bits_per_sample / 2);
     if(p_mem_player_var->frame_buffer_read >= p_mem_player_var->frame_buffer + p_mem_player_var->frame_buffer_size)
       p_mem_player_var->frame_buffer_read = p_mem_player_var->frame_buffer;
 
@@ -139,12 +139,16 @@ pj_status_t mem_player_cb(pjmedia_port *port, void *usr_data) {
 static PyObject *py_mem_player_create(PyObject *pSelf, PyObject *pArgs)
 {
     unsigned clock_rate;
+    unsigned samples_per_frame;
+    unsigned channel_count;
+    unsigned bits_per_sample;
     int status = 0;
+    char ptr[64];
 
     //printf("#py_mem_player_create - start\n");
     PJ_UNUSED_ARG(pSelf);
 
-    if (!PyArg_ParseTuple(pArgs, "i", &clock_rate)) {
+    if (!PyArg_ParseTuple(pArgs, "iiii", &clock_rate, &samples_per_frame, &channel_count, &bits_per_sample)) {
         return NULL;
     }
 
@@ -152,28 +156,20 @@ static PyObject *py_mem_player_create(PyObject *pSelf, PyObject *pArgs)
     memset(p_mem_player_var, 0, sizeof(mem_player_data));
 
     p_mem_player_var->clock_rate = clock_rate;
-    p_mem_player_var->samples_per_frame = pjsua_var.mconf_cfg.samples_per_frame;
+    p_mem_player_var->samples_per_frame = samples_per_frame;
+    p_mem_player_var->channel_count = channel_count;
+    p_mem_player_var->bits_per_sample = bits_per_sample;
 
-    p_mem_player_var->mem_player_buffer_size = packet_size_multiple_of_frame_size*
-      p_mem_player_var->samples_per_frame*2;
+    p_mem_player_var->mem_player_buffer_size = packet_size_multiple_of_frame_size * samples_per_frame * (bits_per_sample / 2);
     p_mem_player_var->mem_player_buffer = (void *)malloc(p_mem_player_var->mem_player_buffer_size);
     memset(p_mem_player_var->mem_player_buffer, 0, p_mem_player_var->mem_player_buffer_size);
 
-    p_mem_player_var->channel_count = pjsua_var.mconf_cfg.channel_count;
-    p_mem_player_var->bits_per_sample = pjsua_var.mconf_cfg.bits_per_sample;
-
-    p_mem_player_var->frame_buffer_size = frame_buffer_multiple_of_packet_size*
-      packet_size_multiple_of_frame_size*p_mem_player_var->samples_per_frame*2;
+    p_mem_player_var->frame_buffer_size = frame_buffer_multiple_of_packet_size * packet_size_multiple_of_frame_size * samples_per_frame * (bits_per_sample / 2);
     p_mem_player_var->frame_buffer = (void *)malloc(p_mem_player_var->frame_buffer_size);
     memset(p_mem_player_var->frame_buffer, 0, p_mem_player_var->frame_buffer_size);
 
     p_mem_player_var->frame_buffer_write = p_mem_player_var->frame_buffer;
     p_mem_player_var->frame_buffer_read = p_mem_player_var->frame_buffer;
-
-    if(pjsua_var.mconf_cfg.samples_per_frame > p_mem_player_var->mem_player_buffer_size) {
-        printf("#py_mem_player_create - Buffer size is too small.");
-        return Py_BuildValue("iii", -1, 0, 0);
-    }
 
     //printf("#py_mem_player_create - 0\n");
 
@@ -212,7 +208,9 @@ static PyObject *py_mem_player_create(PyObject *pSelf, PyObject *pArgs)
         return Py_BuildValue("iii", -1, 0, 0);;
     }
 
-    return Py_BuildValue("iii", PJ_SUCCESS, p_mem_player_var, p_mem_player_var->port_slot);
+    snprintf(ptr, 64, "%p", p_mem_player_var);
+
+    return Py_BuildValue("isi", PJ_SUCCESS, ptr, p_mem_player_var->port_slot);
 }
 
 /*
@@ -223,14 +221,17 @@ static PyObject *py_mem_player_write_available(PyObject *pSelf, PyObject *pArgs)
 {
     mem_player_data * p_mem_player_var = NULL;
     int size = 0;
+    char *ptr = NULL;
 
     //printf("#py_mem_player_write_available - start\n");
 
     PJ_UNUSED_ARG(pSelf);
 
-    if (!PyArg_ParseTuple(pArgs, "i", &p_mem_player_var)) {
+    if (!PyArg_ParseTuple(pArgs, "s", &ptr)) {
         return NULL;
     }
+
+    sscanf(ptr, "%p", &p_mem_player_var);
 
     pj_lock_acquire(p_mem_player_var->lock);
 
@@ -258,30 +259,35 @@ static PyObject *py_mem_player_put_frame(PyObject *pSelf, PyObject *pArgs)
 {
     mem_player_data * p_mem_player_var = NULL;
     PyObject *pFrame;
+    char *ptr = NULL;
 
     //printf("#py_mem_player_put_frame - start\n");
     PJ_UNUSED_ARG(pSelf);
 
-    if (!PyArg_ParseTuple(pArgs, "iO", &p_mem_player_var, &pFrame)) {
+    if (!PyArg_ParseTuple(pArgs, "sS", &ptr, &pFrame)) {
         return NULL;
     }
+
+    sscanf(ptr, "%p", &p_mem_player_var);
 
     pj_lock_acquire(p_mem_player_var->lock);
 
     //printf("#py_mem_player_put_frame - 0\n");
-    pj_str_t frame = PyUnicode_ToPJ(pFrame);
+    char *frame = PyBytes_AsString(pFrame);
+    unsigned int slen = PyBytes_Size(pFrame);
 
     //printf("#py_mem_player_put_frame - 1\n");
-    if(frame.slen != p_mem_player_var->samples_per_frame*2) {
-        printf("#py_mem_player_put_frame - Input frame has different size to the mem player frame.");
+    if(slen != p_mem_player_var->samples_per_frame*2) {
+        printf("#py_mem_player_put_frame - Input frame %d has different size to the mem player frame %d.\n",
+            slen, (p_mem_player_var->samples_per_frame * (p_mem_player_var->bits_per_sample / 2)));
         pj_lock_release(p_mem_player_var->lock);
-        return Py_BuildValue("i", -1);
+        return Py_BuildValue("ii", PJ_FALSE, 0);
     }
 
     //printf("#py_mem_player_put_frame - 2\n");
 
-    memcpy(p_mem_player_var->frame_buffer_write, frame.ptr, frame.slen);
-    p_mem_player_var->frame_buffer_write += frame.slen;
+    memcpy(p_mem_player_var->frame_buffer_write, frame, slen);
+    p_mem_player_var->frame_buffer_write += slen;
     if(p_mem_player_var->frame_buffer_write >= p_mem_player_var->frame_buffer + p_mem_player_var->frame_buffer_size)
       p_mem_player_var->frame_buffer_write = p_mem_player_var->frame_buffer;
 
@@ -305,13 +311,16 @@ static PyObject *py_mem_player_put_frame(PyObject *pSelf, PyObject *pArgs)
 static PyObject *py_mem_player_get_num_played_frames(PyObject *pSelf, PyObject *pArgs)
 {
     mem_player_data * p_mem_player_var = NULL;
+    char *ptr = NULL;
 
     //printf("#py_mem_player_get_last_played_frame - start\n");
     PJ_UNUSED_ARG(pSelf);
 
-    if (!PyArg_ParseTuple(pArgs, "i", &p_mem_player_var)) {
+    if (!PyArg_ParseTuple(pArgs, "s", &ptr)) {
         return NULL;
     }
+
+    sscanf(ptr, "%p", &p_mem_player_var);
 
     pj_lock_acquire(p_mem_player_var->lock);
 
@@ -329,13 +338,16 @@ static PyObject *py_mem_player_get_num_played_frames(PyObject *pSelf, PyObject *
 static PyObject *py_mem_player_flush(PyObject *pSelf, PyObject *pArgs)
 {
     mem_player_data * p_mem_player_var = NULL;
+    char *ptr = NULL;
 
     //printf("#py_mem_player_flush - start\n");
     PJ_UNUSED_ARG(pSelf);
 
-    if (!PyArg_ParseTuple(pArgs, "i", &p_mem_player_var)) {
+    if (!PyArg_ParseTuple(pArgs, "s", &ptr)) {
         return NULL;
     }
+
+    sscanf(ptr, "%p", &p_mem_player_var);
 
     pj_lock_acquire(p_mem_player_var->lock);
 
@@ -398,12 +410,16 @@ pj_status_t mem_capture_cb(pjmedia_port *port, void *usr_data) {
 static PyObject *py_mem_capture_create(PyObject *pSelf, PyObject *pArgs)
 {
     unsigned clock_rate;
+    unsigned samples_per_frame;
+    unsigned channel_count;
+    unsigned bits_per_sample;
     int status = 0;
+    char ptr[64];
 
     //printf("#py_mem_capture_create - start\n");
     PJ_UNUSED_ARG(pSelf);
 
-    if (!PyArg_ParseTuple(pArgs, "i", &clock_rate)) {
+    if (!PyArg_ParseTuple(pArgs, "iiii", &clock_rate, &samples_per_frame, &channel_count, &bits_per_sample)) {
         return NULL;
     }
 
@@ -411,28 +427,21 @@ static PyObject *py_mem_capture_create(PyObject *pSelf, PyObject *pArgs)
     memset(p_mem_capture_var, 0, sizeof(mem_capture_data));
 
     p_mem_capture_var->clock_rate = clock_rate;
-    p_mem_capture_var->samples_per_frame = pjsua_var.mconf_cfg.samples_per_frame;
+    p_mem_capture_var->samples_per_frame = samples_per_frame;
+    p_mem_capture_var->channel_count = channel_count;
+    p_mem_capture_var->bits_per_sample = bits_per_sample;
 
-    p_mem_capture_var->mem_capture_buffer_size = packet_size_multiple_of_frame_size*
-      p_mem_capture_var->samples_per_frame*2;
+    p_mem_capture_var->mem_capture_buffer_size = packet_size_multiple_of_frame_size * samples_per_frame * (bits_per_sample / 2);
     p_mem_capture_var->mem_capture_buffer = (void *)malloc(p_mem_capture_var->mem_capture_buffer_size);
     memset(p_mem_capture_var->mem_capture_buffer, 0, p_mem_capture_var->mem_capture_buffer_size);
 
-    p_mem_capture_var->channel_count = pjsua_var.mconf_cfg.channel_count;
-    p_mem_capture_var->bits_per_sample = pjsua_var.mconf_cfg.bits_per_sample;
-
-    p_mem_capture_var->frame_buffer_size = frame_buffer_multiple_of_packet_size*
-      packet_size_multiple_of_frame_size*p_mem_capture_var->samples_per_frame*2;
+    p_mem_capture_var->frame_buffer_size = frame_buffer_multiple_of_packet_size *
+      packet_size_multiple_of_frame_size * samples_per_frame * (bits_per_sample / 2);
     p_mem_capture_var->frame_buffer = (void *)malloc(p_mem_capture_var->frame_buffer_size);
     memset(p_mem_capture_var->frame_buffer, 0, p_mem_capture_var->frame_buffer_size);
 
     p_mem_capture_var->frame_buffer_write = p_mem_capture_var->frame_buffer;
     p_mem_capture_var->frame_buffer_read = p_mem_capture_var->frame_buffer;
-
-    if(pjsua_var.mconf_cfg.samples_per_frame > p_mem_capture_var->mem_capture_buffer_size) {
-        printf("#py_mem_capture_create - Buffer size is too small.");
-        return Py_BuildValue("iii", -1, 0, 0);
-    }
 
     //printf("#py_mem_capture_create - 0\n");
 
@@ -471,7 +480,9 @@ static PyObject *py_mem_capture_create(PyObject *pSelf, PyObject *pArgs)
         return Py_BuildValue("iii", -1, 0, 0);;
     }
 
-    return Py_BuildValue("iii", PJ_SUCCESS, p_mem_capture_var, p_mem_capture_var->port_slot);
+    snprintf(ptr, 64, "%p", p_mem_capture_var);
+
+    return Py_BuildValue("isi", PJ_SUCCESS, ptr, p_mem_capture_var->port_slot);
 }
 
 /*
@@ -482,14 +493,17 @@ static PyObject *py_mem_capture_read_available(PyObject *pSelf, PyObject *pArgs)
 {
     mem_capture_data * p_mem_capture_var = NULL;
     int size = 0;
+    char *ptr = NULL;
 
     //printf("#py_mem_capture_read_available - start\n");
 
     PJ_UNUSED_ARG(pSelf);
 
-    if (!PyArg_ParseTuple(pArgs, "i", &p_mem_capture_var)) {
+    if (!PyArg_ParseTuple(pArgs, "s", &ptr)) {
         return NULL;
     }
+
+    sscanf(ptr, "%p", &p_mem_capture_var);
 
     pj_lock_acquire(p_mem_capture_var->lock);
 
@@ -515,26 +529,33 @@ static PyObject *py_mem_capture_read_available(PyObject *pSelf, PyObject *pArgs)
 static PyObject *py_mem_capture_get_frame(PyObject *pSelf, PyObject *pArgs)
 {
     mem_capture_data * p_mem_capture_var = NULL;
-    pj_str_t frame;
+    PyObject *frame;
+    char *ptr = NULL;
+    char *buff = NULL;
+    int size = 0;
 
     //printf("#py_mem_capture_get_frame - start\n");
     PJ_UNUSED_ARG(pSelf);
 
-    if (!PyArg_ParseTuple(pArgs, "i", &p_mem_capture_var)) {
+    if (!PyArg_ParseTuple(pArgs, "s", &ptr)) {
         return NULL;
     }
+
+    sscanf(ptr, "%p", &p_mem_capture_var);
 
     pj_lock_acquire(p_mem_capture_var->lock);
 
     //printf("#py_mem_capture_get_frame - 1\n");
 
-    frame.ptr = pj_pool_alloc(pjsua_var.pool, p_mem_capture_var->samples_per_frame*2);;
-    frame.slen = p_mem_capture_var->samples_per_frame*2;
+    // Allocate a new ByteArray object
+    size = p_mem_capture_var->samples_per_frame * (p_mem_capture_var->bits_per_sample / 2);
+    frame = PyByteArray_FromStringAndSize(NULL, size);
+    buff = PyByteArray_AsString(frame);
 
     //printf("#py_mem_capture_get_frame - 2\n");
 
-    memcpy(frame.ptr, p_mem_capture_var->frame_buffer_read, frame.slen);
-    p_mem_capture_var->frame_buffer_read += frame.slen;
+    memcpy(buff, p_mem_capture_var->frame_buffer_read, size);
+    p_mem_capture_var->frame_buffer_read += size;
     if(p_mem_capture_var->frame_buffer_read >= p_mem_capture_var->frame_buffer + p_mem_capture_var->frame_buffer_size)
       p_mem_capture_var->frame_buffer_read = p_mem_capture_var->frame_buffer;
 
@@ -546,13 +567,11 @@ static PyObject *py_mem_capture_get_frame(PyObject *pSelf, PyObject *pArgs)
 
     //printf("#py_mem_capture_get_frame - 3\n");
 
-    PyObject *pFrame = PyUnicode_FromPJ(&frame);
-
     pj_lock_release(p_mem_capture_var->lock);
 
     //printf("#py_mem_capture_get_frame - 4\n");
 
-    return Py_BuildValue("iO", PJ_SUCCESS, pFrame);
+    return Py_BuildValue("iO", PJ_SUCCESS, frame);
 }
 
 
@@ -563,13 +582,16 @@ static PyObject *py_mem_capture_get_frame(PyObject *pSelf, PyObject *pArgs)
 static PyObject *py_mem_capture_flush(PyObject *pSelf, PyObject *pArgs)
 {
     mem_capture_data * p_mem_capture_var = NULL;
+    char *ptr = NULL;
 
     printf("#py_mem_capture_flush - start\n");
     PJ_UNUSED_ARG(pSelf);
 
-    if (!PyArg_ParseTuple(pArgs, "i", &p_mem_capture_var)) {
+    if (!PyArg_ParseTuple(pArgs, "s", &ptr)) {
         return NULL;
     }
+
+    sscanf(ptr, "%p", &p_mem_capture_var);
 
     pj_lock_acquire(p_mem_capture_var->lock);
 
