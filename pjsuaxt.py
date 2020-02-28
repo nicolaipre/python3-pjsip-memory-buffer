@@ -2970,11 +2970,14 @@ class MemPlayer:
     _lib = None
     _obj_name = ""
 
-    def __init__(self, lib, clock_rate, cb=None):
+    def __init__(self, lib, clock_rate, sample_per_frame, channel_count, bits_per_sample, cb=None):
         self._lib = weakref.ref(lib)
         self._obj_name = "{MemPlayer}"
 
         self.clock_rate = clock_rate
+        self.sample_per_frame = sample_per_frame
+        self.channel_count = channel_count
+        self.bits_per_sample = bits_per_sample
 
     def create(self, loop=False):
         """Create mem player.
@@ -2987,7 +2990,7 @@ class MemPlayer:
 
         lck = self._lib().auto_lock()
         err, self.port_id, self.port_slot = _pjsuaxt.mem_player_create(
-            self.clock_rate)
+            self.clock_rate, self.sample_per_frame, self.channel_count, self.bits_per_sample)
         self._lib()._err_check("create()", self, err)
 
     def get_write_available(self):
@@ -3034,11 +3037,14 @@ class MemCapture:
     _lib = None
     _obj_name = ""
 
-    def __init__(self, lib, clock_rate, cb=None):
+    def __init__(self, lib, clock_rate, sample_per_frame, channel_count, bits_per_sample, cb=None):
         self._lib = weakref.ref(lib)
         self._obj_name = "{MemCapture}"
 
         self.clock_rate = clock_rate
+        self.sample_per_frame = sample_per_frame
+        self.channel_count = channel_count
+        self.bits_per_sample = bits_per_sample
 
     def create(self, loop=False):
         """Create mem capture.
@@ -3052,7 +3058,7 @@ class MemCapture:
         """
 
         lck = self._lib().auto_lock()
-        err, self.port_id, self.port_slot = _pjsuaxt.mem_capture_create(self.clock_rate)
+        err, self.port_id, self.port_slot = _pjsuaxt.mem_capture_create(self.clock_rate, self.sample_per_frame, self.channel_count, self.bits_per_sample)
         self._lib()._err_check("create()", self, err)
 
     def get_read_available(self):
