@@ -21,8 +21,8 @@ cd pjsip-apps/src/
 git clone https://github.com/nicolaipre/python3-pjsip-memory-buffer.git
 cd python3-pjsip-memory-buffer
 
-python3 setup-pjsuaxt.py build
-sudo python3 setup-pjsuaxt.py install
+python3 setup.py build
+sudo python3 setup.py install
 ```
 
 ## Test installation
