@@ -277,9 +277,9 @@ static PyObject *py_mem_player_put_frame(PyObject *pSelf, PyObject *pArgs)
     unsigned int slen = PyBytes_Size(pFrame);
 
     //printf("#py_mem_player_put_frame - 1\n");
-    if(slen != p_mem_player_var->samples_per_frame*2) {
-        printf("#py_mem_player_put_frame - Input frame %d has different size to the mem player frame %d.\n",
-            slen, (p_mem_player_var->samples_per_frame * (p_mem_player_var->bits_per_sample / 2)));
+    if(slen != p_mem_player_var->samples_per_frame) { // removed *2
+        printf("#py_mem_player_put_frame - Input frame size: %d does not equal mem player frame size: %d.\n",
+            slen, (p_mem_player_var->samples_per_frame * (p_mem_player_var->bits_per_sample / 2))); // why / 2?
         pj_lock_release(p_mem_player_var->lock);
         return Py_BuildValue("ii", PJ_FALSE, 0);
     }
