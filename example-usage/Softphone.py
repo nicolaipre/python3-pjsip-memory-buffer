@@ -2,7 +2,7 @@
 from Audio import BufferIO
 from threading import Thread
 
-class PjsipStream:
+class Softphone:
     def __init__(self, sample_rate=48000.0, samples_per_frame=960, channel_count=2, bits_per_sample=16)
         self.sample_rate = sample_rate
         self.samples_per_frame = samples_per_frame
