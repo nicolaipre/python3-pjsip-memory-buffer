@@ -4,26 +4,6 @@ I have simply combined the following two libraries because I needed both in one.
 
 This version works with pjproject-2.9.
 
-## Usage
-```python
-# Create two audio IO buffers
-call_audio    = BufferIO(sample_rate=48000.0)
-discord_audio = BufferIO(sample_rate=48000.0)
-
-# Create the audio connections
-pj_stream  =  PjsipStream(sample_rate=48000.0)
-disc_vc    = DiscordVoice(sample_rate=48000.0)
-
-pj_stream.listen(call_audio)  # Capture phone audio to buffer
-disc_vc.play(call_audio)      # Play phone audio to discord voice connector
-
-disc_vc.listen(discord_audio) # Capture discord audio to buffer
-pj_stream.play(discord_audio) # Play discord audio to phone
-```
-
-See file `main.py` in `example-usage` for full example.
-- For the original source, see: https://github.com/UFAL-DSG/alex/blob/master/alex/components/hub/vio.py
-
 ## Install and compile PJSUA(XT) for Python 3
 ```sh
 sudo apt install python3 python3-dev build-essential libasound2-dev
@@ -53,7 +33,27 @@ Type "help", "copyright", "credits" or "license" for more information.
 >>>
 ```
 
+## Usage
+See file `main.py` in `example-usage` for full example.
+
+```python
+# Create two audio IO buffers
+call_audio    = BufferIO(sample_rate=48000.0)
+discord_audio = BufferIO(sample_rate=48000.0)
+
+# Create the audio connections
+pj_stream  =  PjsipStream(sample_rate=48000.0)
+disc_vc    = DiscordVoice(sample_rate=48000.0)
+
+pj_stream.listen(call_audio)  # Capture phone audio to buffer
+disc_vc.play(call_audio)      # Play phone audio to discord voice connector
+
+disc_vc.listen(discord_audio) # Capture discord audio to buffer
+pj_stream.play(discord_audio) # Play discord audio to phone
+```
+- For the original source, see: https://github.com/UFAL-DSG/alex/blob/master/alex/components/hub/vio.py
+
+
 ### Credits to:
 - https://github.com/UFAL-DSG/pjsip - For implementing buffered streaming
 - https://github.com/mgwilliams/python3-pjsip - For porting to Python 3
-
