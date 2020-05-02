@@ -35,7 +35,9 @@ Type "help", "copyright", "credits" or "license" for more information.
 ```
 
 ## Usage
-See https://github.com/UFAL-DSG/alex/blob/master/alex/components/hub/vio.py
+See file `main.py` in `example-usage`.
+
+- For the original source, see: https://github.com/UFAL-DSG/alex/blob/master/alex/components/hub/vio.py
 
 ### Credits to:
 - https://github.com/UFAL-DSG/pjsip - For implementing buffered streaming
