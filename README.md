@@ -42,14 +42,14 @@ call_audio    = BufferIO(sample_rate=48000.0)
 discord_audio = BufferIO(sample_rate=48000.0)
 
 # Create the audio connections
-pj_stream  =  PjsipStream(sample_rate=48000.0)
+softphone  = Softphone(sample_rate=48000.0)
 disc_vc    = DiscordVoice(sample_rate=48000.0)
 
-pj_stream.listen(call_audio)  # Capture phone audio to buffer
+softphone.listen(call_audio)  # Capture phone audio to buffer
 disc_vc.play(call_audio)      # Play phone audio to discord voice connector
 
 disc_vc.listen(discord_audio) # Capture discord audio to buffer
-pj_stream.play(discord_audio) # Play discord audio to phone
+softphone.play(discord_audio) # Play discord audio to phone
 ```
 - For the original source, see: https://github.com/UFAL-DSG/alex/blob/master/alex/components/hub/vio.py
 
