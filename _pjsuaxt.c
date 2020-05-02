@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#include "_pjsuaxt.h" // supposed to be _pjsuaxt.h ??
+#include "_pjsuaxt.h"
 
 #include <pjsua-lib/pjsua_internal.h> // ADDED, this was not modified.. confirmed in file mods: https://github.com/UFAL-DSG/pjsip/commit/a7df21d4a5213667c3283a86767518b5774a2760
 
