@@ -59,3 +59,7 @@ disc_vc.play(call_audio)      # Play phone audio to discord voice connector
 ### Credits to:
 - https://github.com/UFAL-DSG/pjsip - For implementing buffered streaming
 - https://github.com/mgwilliams/python3-pjsip - For porting to Python 3
+
+
+### Alternative implementation (have not checked for errors):
+- https://github.com/pjsip/pjproject/pull/5/commits/8666ca5a3b82c6e2229161368edd0ecb8e3d6b7a
