@@ -45,11 +45,13 @@ discord_audio = BufferIO(sample_rate=48000.0)
 softphone  = Softphone(sample_rate=48000.0)
 disc_vc    = DiscordVoice(sample_rate=48000.0)
 
+# Start listening 
 softphone.listen(call_audio)  # Capture phone audio to buffer
-disc_vc.play(call_audio)      # Play phone audio to discord voice connector
-
 disc_vc.listen(discord_audio) # Capture discord audio to buffer
+
+# Start relaying the captured audio
 softphone.play(discord_audio) # Play discord audio to phone
+disc_vc.play(call_audio)      # Play phone audio to discord voice connector
 ```
 - For the original source, see: https://github.com/UFAL-DSG/alex/blob/master/alex/components/hub/vio.py
 

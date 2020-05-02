@@ -59,7 +59,7 @@ class Softphone:
     def _play_loop(self, source):
         """ Player thread
         """
-        self.lib.thread_register("PlayThread")
+        self.lib.thread_register("PlayThread")  # Register thread with pj lib
 
         mem_player = pj.MemPlayer(self.lib,
             clock_rate      =self.sample_rate,
@@ -79,7 +79,7 @@ class Softphone:
                 if data == False: # If buffer does not hold enough data, dont put_frame
                     continue
                 
-                total_bytes_played = mem_player.put_frame(data)
+                total_bytes_played = mem_player.put_frame(data) # Play audio frame from buffer
 
 
 
