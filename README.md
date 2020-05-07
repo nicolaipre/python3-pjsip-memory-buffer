@@ -1,4 +1,8 @@
-# Python 3 PJSIP with memory buffers for audio streaming
+# [DEPRECATED]: Python 3 PJSIP with memory buffers for audio streaming
+
+**This project only partially works. Instead use:** [pjproject fork by malarinv - Branch: py37](https://github.com/malarinv/pjproject/tree/py37)
+
+---
 
 I have simply combined the following two libraries because I needed both in one.
 
